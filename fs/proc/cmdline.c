@@ -6,10 +6,18 @@
 #include <linux/string.h>
 #include <asm/setup.h>
 
-#ifdef CONFIG_INITRAMFS_IGNORE_SKIP_FLAG
+#if defined(CONFIG_INITRAMFS_IGNORE_SKIP_FLAG) || \
+    defined(CONFIG_PROC_CMDLINE_APPEND_ANDROID_FORCE_NORMAL_BOOT)
 #define INITRAMFS_STR_FIND "skip_initramf"
+#endif
+
+#ifdef CONFIG_INITRAMFS_IGNORE_SKIP_FLAG
 #define INITRAMFS_STR_REPLACE "want_initramf"
 #define INITRAMFS_STR_LEN (sizeof(INITRAMFS_STR_FIND) - 1)
+#endif
+
+#ifdef CONFIG_PROC_CMDLINE_APPEND_ANDROID_FORCE_NORMAL_BOOT
+#define ANDROID_FORCE_NORMAL_BOOT_STR " androidboot.force_normal_boot=1"
 #endif
 
 static char proc_command_line[COMMAND_LINE_SIZE];
@@ -28,6 +36,12 @@ static void __init proc_command_line_init(void)
 			memcpy(offset_addr, INITRAMFS_STR_REPLACE,
 			       INITRAMFS_STR_LEN);
 	}
+#endif
+
+#ifdef CONFIG_PROC_CMDLINE_APPEND_ANDROID_FORCE_NORMAL_BOOT
+	if (strstr(saved_command_line, INITRAMFS_STR_FIND))
+		strlcat(proc_command_line, ANDROID_FORCE_NORMAL_BOOT_STR,
+			sizeof(proc_command_line));
 #endif
 }
 
