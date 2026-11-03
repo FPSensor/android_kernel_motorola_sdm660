@@ -430,6 +430,13 @@ depends on ARCH_BCM || ARCH_BRCMSTB || ARCH_BCM2835 || COMPILE_TEST
 source "drivers/thermal/broadcom/Kconfig"
 endmenu
 
+config MMI_SYS_TEMP
+	tristate "Motorola Surface Temperature Driver"
+	depends on THERMAL
+	help
+	  Creates the front_temp and back_temp thermal zones and the
+	  /dev/mmi_sys_temp device thermal-engine uses to populate them.
+
 menu "Texas Instruments thermal drivers"
 depends on ARCH_HAS_BANDGAP || COMPILE_TEST
 depends on HAS_IOMEM
