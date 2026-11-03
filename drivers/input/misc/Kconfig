@@ -885,4 +885,20 @@ config INPUT_SC27XX_VIBRA
 	  To compile this driver as a module, choose M here. The module will
 	  be called sc27xx_vibra.
 
+config INPUT_SX9310
+	tristate "Semtech SX9310 SAR sensor"
+	depends on I2C
+	select SENSORS
+	help
+	  Say Y to enable the Semtech SX9310 capacitive SAR proximity sensor
+	  used on Motorola devices (e.g. payton).
+
+config SENSORS_FPC_1020
+	tristate "FPC1020 fingerprint sensor (Motorola TEE variant)"
+	depends on OF_GPIO
+	help
+	  Say Y here to include the Motorola variant of the FPC1020 fingerprint
+	  sensor driver, which exposes irq/dev_enable sysfs nodes used by the
+	  Motorola fingerprint HAL. If unsure, say N.
+
 endif
