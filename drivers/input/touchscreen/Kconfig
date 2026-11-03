@@ -1358,4 +1358,6 @@ source "drivers/input/touchscreen/nt36xxx/Kconfig"
 
 source "drivers/input/touchscreen/synaptics_mmi/Kconfig"
 
+source "drivers/input/touchscreen/focaltech_mmi/Kconfig"
+
 endif
