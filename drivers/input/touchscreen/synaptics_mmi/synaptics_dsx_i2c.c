@@ -7728,7 +7728,7 @@ static int synaptics_rmi4_probe(struct i2c_client *client,
 		rc = synaptics_rmi4_hw_init(rmi4_data);
 		if (rc < 0) {
 			i2c_set_clientdata(rmi4_data->i2c_client, NULL);
-			goto free_and_exit;
+			goto remove_instance;
 		}
 		return 0;
 	}
@@ -7741,6 +7741,17 @@ static int synaptics_rmi4_probe(struct i2c_client *client,
 				dummy_init, dummy_remove, NULL, NULL, IC_MODE_ANY);
 	return 0;
 
+remove_instance:
+	/*
+	 * Expansion functions (fw update, rmi_dev) queue det_work for every
+	 * instance in drv_instances_list: stop it and unlink the instance
+	 * before freeing it, or the work and its timer run on freed memory.
+	 */
+	cancel_delayed_work_sync(&rmi4_data->exp_fn_ctrl.det_work);
+	mutex_lock(&instances_mutex);
+	list_del(&rmi4_data->node);
+	mutex_unlock(&instances_mutex);
+	device_remove_file(&client->dev, &dev_attr_poweron);
 free_and_exit:
 	kfree(rmi4_data);
 	return rc;
