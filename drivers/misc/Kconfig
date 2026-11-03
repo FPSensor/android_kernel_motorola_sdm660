@@ -656,6 +656,7 @@ config TPS61280
 	  driver is meant for basic configuration only and does not provide
 	  any pm/regulator/thermal framework registration.
 source "drivers/misc/qrc/Kconfig"
+source "drivers/misc/utag/Kconfig"
 endmenu
 
 config OKL4_USER_VIPC
