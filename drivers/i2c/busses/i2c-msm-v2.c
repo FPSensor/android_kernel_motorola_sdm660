@@ -2028,6 +2028,27 @@ static int i2c_msm_qup_post_xfer(struct i2c_msm_ctrl *ctrl, int err)
 	return err;
 }
 
+/*
+ * Clients written for 4.4 still hand over buffers on the stack. With
+ * CONFIG_VMAP_STACK those are vmalloc addresses that dma_map_single()
+ * cannot translate, so the cache maintenance on the bogus linear address
+ * faults. Fall back to BLOCK (PIO) mode for such transfers.
+ */
+static bool i2c_msm_xfer_dma_safe(struct i2c_msm_xfer *xfer)
+{
+	int i;
+
+	for (i = 0; i < xfer->msg_cnt; i++) {
+		struct i2c_msg *msg = &xfer->msgs[i];
+
+		if (msg->len && (!virt_addr_valid(msg->buf) ||
+		    !virt_addr_valid(msg->buf + msg->len - 1)))
+			return false;
+	}
+
+	return true;
+}
+
 static enum i2c_msm_xfer_mode_id
 i2c_msm_qup_choose_mode(struct i2c_msm_ctrl *ctrl)
 {
@@ -2044,7 +2065,7 @@ i2c_msm_qup_choose_mode(struct i2c_msm_ctrl *ctrl)
 		(tx_cnt_sum < fifo->output_fifo_sz)))
 		return I2C_MSM_XFER_MODE_FIFO;
 
-	if (ctrl->rsrcs.disable_dma)
+	if (ctrl->rsrcs.disable_dma || !i2c_msm_xfer_dma_safe(xfer))
 		return I2C_MSM_XFER_MODE_BLOCK;
 
 	return I2C_MSM_XFER_MODE_DMA;
