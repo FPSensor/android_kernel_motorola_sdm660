@@ -721,21 +721,16 @@ cmd_done:
 	return ioc_err ? ioc_err : err;
 }
 
-static int mmc_blk_ioctl_multi_cmd(struct mmc_blk_data *md,
-				   struct mmc_ioc_multi_cmd __user *user,
-				   struct mmc_rpmb_data *rpmb)
+static int __mmc_blk_ioctl_multi_cmd(struct mmc_blk_data *md,
+				     struct mmc_ioc_cmd __user *cmds,
+				     __u64 num_of_cmds,
+				     struct mmc_rpmb_data *rpmb)
 {
 	struct mmc_blk_ioc_data **idata = NULL;
-	struct mmc_ioc_cmd __user *cmds = user->cmds;
 	struct mmc_card *card;
 	struct mmc_queue *mq;
 	int i, err = 0, ioc_err = 0;
-	__u64 num_of_cmds;
 	struct request *req;
-
-	if (copy_from_user(&num_of_cmds, &user->num_of_cmds,
-			   sizeof(num_of_cmds)))
-		return -EFAULT;
 
 	if (!num_of_cmds)
 		return 0;
@@ -796,6 +791,43 @@ cmd_err:
 	}
 	kfree(idata);
 	return ioc_err ? ioc_err : err;
+}
+
+static int mmc_blk_ioctl_multi_cmd(struct mmc_blk_data *md,
+				   struct mmc_ioc_multi_cmd __user *user,
+				   struct mmc_rpmb_data *rpmb)
+{
+	__u64 num_of_cmds;
+
+	if (copy_from_user(&num_of_cmds, &user->num_of_cmds,
+			   sizeof(num_of_cmds)))
+		return -EFAULT;
+
+	return __mmc_blk_ioctl_multi_cmd(md, user->cmds, num_of_cmds, rpmb);
+}
+
+/*
+ * Legacy Qualcomm MMC_IOC_RPMB_CMD: up to MMC_IOC_MAX_RPMB_CMD data
+ * commands, terminated early by a zero opcode. Prebuilt TrustZone
+ * listeners (librpmb) still use it on the RPMB device. Each command gets
+ * the same implicit CMD23 and status polling as an RPMB MMC_IOC_CMD.
+ */
+static int mmc_blk_ioctl_rpmb_cmd(struct mmc_blk_data *md,
+				  struct mmc_ioc_rpmb __user *user,
+				  struct mmc_rpmb_data *rpmb)
+{
+	__u64 n;
+
+	for (n = 0; n < MMC_IOC_MAX_RPMB_CMD; n++) {
+		__u32 opcode;
+
+		if (get_user(opcode, &user->cmds[n].opcode))
+			return -EFAULT;
+		if (!opcode)
+			break;
+	}
+
+	return __mmc_blk_ioctl_multi_cmd(md, user->cmds, n, rpmb);
 }
 
 static int mmc_blk_check_blkdev(struct block_device *bdev)
@@ -2572,6 +2604,11 @@ static long mmc_rpmb_ioctl(struct file *filp, unsigned int cmd,
 	case MMC_IOC_MULTI_CMD:
 		ret = mmc_blk_ioctl_multi_cmd(rpmb->md,
 					(struct mmc_ioc_multi_cmd __user *)arg,
+					rpmb);
+		break;
+	case MMC_IOC_RPMB_CMD:
+		ret = mmc_blk_ioctl_rpmb_cmd(rpmb->md,
+					(struct mmc_ioc_rpmb __user *)arg,
 					rpmb);
 		break;
 	default:
