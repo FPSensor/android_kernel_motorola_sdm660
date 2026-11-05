@@ -216,11 +216,29 @@ void mdss_mdp_release_splash_pipe(struct msm_fb_data_type *mfd)
 void mdss_free_bootmem(u32 mem_addr, u32 size)
 {
 	unsigned long pfn_start, pfn_end, pfn_idx;
+	unsigned long skipped = 0;
 
 	pfn_start = mem_addr >> PAGE_SHIFT;
 	pfn_end = (mem_addr + size) >> PAGE_SHIFT;
-	for (pfn_idx = pfn_start; pfn_idx < pfn_end; pfn_idx++)
-		free_reserved_page(pfn_to_page(pfn_idx));
+	for (pfn_idx = pfn_start; pfn_idx < pfn_end; pfn_idx++) {
+		struct page *page = pfn_to_page(pfn_idx);
+
+		/*
+		 * The bootloader can grow the splash region over a
+		 * neighbouring one (dfps_data_mem on sdm630) whose owner
+		 * has already given its pages back. Freeing them again
+		 * corrupts the page allocator.
+		 */
+		if (!PageReserved(page)) {
+			skipped++;
+			continue;
+		}
+		free_reserved_page(page);
+	}
+
+	if (skipped)
+		pr_warn("splash: skipped %lu pages already freed in 0x%x+0x%x\n",
+			skipped, mem_addr, size);
 }
 
 int mdss_mdp_splash_cleanup(struct msm_fb_data_type *mfd,
