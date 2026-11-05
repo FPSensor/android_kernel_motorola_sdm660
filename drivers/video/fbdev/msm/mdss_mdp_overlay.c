@@ -5945,6 +5945,17 @@ ctl_stop:
 	}
 
 	mutex_lock(&mdp5_data->ov_lock);
+	/*
+	 * The ctl was only checked without ov_lock above, and the wait for
+	 * the retire fences drops it for a vsync. A failed kickoff in the
+	 * meantime destroys the ctl (mdss_mdp_overlay_start error path), so
+	 * check again before stopping it.
+	 */
+	if (!mdp5_data->ctl) {
+		mutex_unlock(&mdp5_data->ov_lock);
+		pr_warn("fb%d: ctl destroyed while turning off\n", mfd->index);
+		goto end;
+	}
 	/* set the correct pipe_mapped before ctl_stop */
 	mdss_mdp_mixer_update_pipe_map(mdp5_data->ctl,
 			MDSS_MDP_MIXER_MUX_LEFT);
