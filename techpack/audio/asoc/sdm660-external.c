@@ -2020,7 +2020,8 @@ static int msm_madera_mclk_event(struct snd_soc_dapm_widget *w,
 {
 	struct snd_soc_component *component =
 				snd_soc_dapm_to_component(w->dapm);
-	int ret;
+	unsigned int sts = 0;
+	int ret, i;
 
 	pr_debug("%s: event = %d\n", __func__, event);
 
@@ -2036,6 +2037,31 @@ static int msm_madera_mclk_event(struct snd_soc_dapm_widget *w,
 		if (ret)
 			dev_err(component->dev, "Failed to set REFCLK %d\n",
 				ret);
+
+		/*
+		 * The codec only waits 250ms for the lock. Give it a little
+		 * longer, and if it still has not locked to the SLIMbus clock
+		 * keep SYSCLK alive from the 32kHz MCLK2 instead of running
+		 * the whole codec from an unlocked FLL.
+		 */
+		for (i = 0; i < 10; i++) {
+			snd_soc_component_read(component,
+					       MADERA_IRQ1_RAW_STATUS_2, &sts);
+			if (sts & MADERA_FLL1_LOCK_STS1)
+				break;
+			usleep_range(10000, 10100);
+		}
+		if (!(sts & MADERA_FLL1_LOCK_STS1)) {
+			dev_warn(component->dev,
+				 "FLL1 did not lock to SLIMCLK, using MCLK2\n");
+			ret = snd_soc_component_set_pll(component,
+					MADERA_FLL1_REFCLK,
+					MADERA_FLL_SRC_MCLK2, 32768,
+					MADERA_SYSCLK_RATE);
+			if (ret)
+				dev_err(component->dev,
+					"Failed to set REFCLK %d\n", ret);
+		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		ret = snd_soc_component_set_pll(component, MADERA_FLL1_REFCLK,
