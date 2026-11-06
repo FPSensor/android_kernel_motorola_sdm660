@@ -392,6 +392,8 @@ static int fscrypt_get_policy(struct inode *inode, union fscrypt_policy *policy)
 	return fscrypt_policy_from_context(policy, &ctx, ret);
 }
 
+static int fscrypt_update_context(union fscrypt_context *ctx);
+
 static int set_encryption_policy(struct inode *inode,
 				 const union fscrypt_policy *policy)
 {
@@ -434,7 +436,31 @@ static int set_encryption_policy(struct inode *inode,
 
 	ctxsize = fscrypt_new_context_from_policy(&ctx, policy);
 
+	/*
+	 * fscrypt_inherit_context() stores IV_INO_LBLK_32 in the context of
+	 * every file created under a FSCRYPT_MODE_PRIVATE directory on eMMC.
+	 * Store it on the directory itself too, so parent and children match
+	 * on disk: e2fsck compares the raw policies and otherwise clears every
+	 * entry of every encrypted directory after an unclean shutdown.
+	 */
+	if (fscrypt_policy_contents_mode(policy) == FSCRYPT_MODE_PRIVATE) {
+		err = fscrypt_update_context(&ctx);
+		if (err)
+			return err;
+	}
+
 	return inode->i_sb->s_cop->set_context(inode, &ctx, ctxsize, NULL);
+}
+
+/*
+ * Hide the IV_INO_LBLK_32 flag the kernel adds for FSCRYPT_MODE_PRIVATE on
+ * eMMC, so userspace (init, vold) keeps seeing the policy it set.
+ */
+static void fscrypt_hide_private_flags(union fscrypt_policy *policy)
+{
+	if (policy->version == FSCRYPT_POLICY_V1 &&
+	    policy->v1.contents_encryption_mode == FSCRYPT_MODE_PRIVATE)
+		policy->v1.flags &= ~FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32;
 }
 
 int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
@@ -511,6 +537,7 @@ int fscrypt_ioctl_get_policy(struct file *filp, void __user *arg)
 	err = fscrypt_get_policy(file_inode(filp), &policy);
 	if (err)
 		return err;
+	fscrypt_hide_private_flags(&policy);
 
 	if (policy.version != FSCRYPT_POLICY_V1)
 		return -EINVAL;
@@ -538,6 +565,7 @@ int fscrypt_ioctl_get_policy_ex(struct file *filp, void __user *uarg)
 	err = fscrypt_get_policy(file_inode(filp), policy);
 	if (err)
 		return err;
+	fscrypt_hide_private_flags(policy);
 	policy_size = fscrypt_policy_size(policy);
 
 	if (copy_from_user(&arg, uarg, sizeof(arg.policy_size)))
