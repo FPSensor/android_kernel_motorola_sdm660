@@ -5365,6 +5365,8 @@ static const struct of_device_id sdm660_asoc_machine_of_match[]  = {
 	  .data = "tasha_codec"},
 	{ .compatible = "qcom,sdm660-asoc-snd-tavil",
 	  .data = "tavil_codec"},
+	{ .compatible = "qcom,sdm660-asoc-snd-madera",
+	  .data = "madera_codec"},
 	{ .compatible = "qcom,sdm670-asoc-snd",
 	  .data = "internal_codec"},
 	{ .compatible = "qcom,sdm670-asoc-snd-tasha",
@@ -5404,8 +5406,11 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	pdata->mclk_freq = id;
 
 	if (!strcmp(match->data, "tasha_codec") ||
-	    !strcmp(match->data, "tavil_codec")) {
-		if (!strcmp(match->data, "tasha_codec"))
+	    !strcmp(match->data, "tavil_codec") ||
+	    !strcmp(match->data, "madera_codec")) {
+		if (!strcmp(match->data, "madera_codec"))
+			pdata->snd_card_val = EXT_SND_CARD_MADERA;
+		else if (!strcmp(match->data, "tasha_codec"))
 			pdata->snd_card_val = EXT_SND_CARD_TASHA;
 		else
 			pdata->snd_card_val = EXT_SND_CARD_TAVIL;
@@ -5485,7 +5490,9 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 		goto err;
 	}
 
-	if (!of_property_read_bool(pdev->dev.of_node, "qcom,wsa-disable")) {
+	/* Cirrus Logic Madera boards use their own amplifiers, not WSA881x */
+	if (pdata->snd_card_val != EXT_SND_CARD_MADERA &&
+	    !of_property_read_bool(pdev->dev.of_node, "qcom,wsa-disable")) {
 		ret = msm_init_wsa_dev(pdev, card);
 		if (ret)
 			goto err;

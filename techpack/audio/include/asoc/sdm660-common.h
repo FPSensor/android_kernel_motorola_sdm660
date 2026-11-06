@@ -90,6 +90,7 @@ enum {
 	INT_MAX_SND_CARD = INT_DIG_SND_CARD,
 	EXT_SND_CARD_TASHA,
 	EXT_SND_CARD_TAVIL,
+	EXT_SND_CARD_MADERA,
 };
 
 struct msm_snd_interrupt {

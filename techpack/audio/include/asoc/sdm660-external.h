@@ -17,6 +17,11 @@ int msm_proxy_rx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 int msm_proxy_tx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 				    struct snd_pcm_hw_params *params);
 int msm_audrx_init(struct snd_soc_pcm_runtime *rtd);
+#ifdef CONFIG_SND_SOC_MADERA
+#define SDM660_MADERA_MCLK_RATE	12288000
+#define SDM660_MADERA_SCLK_RATE	1536000
+int msm_madera_init(struct snd_soc_pcm_runtime *rtd);
+#endif
 int msm_snd_cpe_hw_params(struct snd_pcm_substream *substream,
 			  struct snd_pcm_hw_params *params);
 struct snd_soc_card *populate_snd_card_dailinks(struct device *dev,
