@@ -368,7 +368,14 @@ int rmnet_vnd_newlink(u8 id, struct net_device *rmnet_dev,
 		return -EBUSY;
 
 	rmnet_dev->hw_features = NETIF_F_RXCSUM;
-	rmnet_dev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+	/*
+	 * IPA v2 (rmnet_ipa) doesn't fill in the uplink checksums from the
+	 * MAP checksum v4 header: TCP and UDP packets reached the network
+	 * with bad checksums. Compute them in software there; the header
+	 * still goes out, marked as not offloaded.
+	 */
+	if (strncmp(real_dev->name, "rmnet_ipa", 9))
+		rmnet_dev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 	rmnet_dev->hw_features |= NETIF_F_SG;
 	rmnet_dev->hw_features |= NETIF_F_GRO_HW;
 
