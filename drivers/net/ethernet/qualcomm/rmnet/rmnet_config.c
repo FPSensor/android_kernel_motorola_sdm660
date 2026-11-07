@@ -170,6 +170,25 @@ static void rmnet_unregister_bridge(struct net_device *dev,
 	}
 }
 
+/*
+ * IPA v2 (rmnet_ipa) uplink: netmgrd asks rmnet_ipa for checksum offload
+ * (an 8 byte QMAP + checksum header) and configures the modem for it, but
+ * the netmgrd builds that create the links over rtnetlink only request
+ * the ingress checksum here. Without the egress checksum header the
+ * modem silently drops every uplink packet. When the downlink uses MAP
+ * checksum v4 on an IPA device, use it on the uplink too, as the legacy
+ * rmnet_data driver was configured.
+ */
+static u32 rmnet_fixup_data_format(struct net_device *real_dev, u32 data_format)
+{
+	if (!strncmp(real_dev->name, "rmnet_ipa", 9) &&
+	    (data_format & RMNET_FLAGS_INGRESS_MAP_CKSUMV4) &&
+	    !(data_format & (RMNET_FLAGS_EGRESS_MAP_CKSUMV3 |
+			     RMNET_FLAGS_EGRESS_MAP_CKSUMV5)))
+		data_format |= RMNET_FLAGS_EGRESS_MAP_CKSUMV4;
+	return data_format;
+}
+
 static int rmnet_newlink(struct net *src_net, struct net_device *dev,
 			 struct nlattr *tb[], struct nlattr *data[],
 			 struct netlink_ext_ack *extack)
@@ -212,7 +231,8 @@ static int rmnet_newlink(struct net *src_net, struct net_device *dev,
 		struct ifla_rmnet_flags *flags;
 
 		flags = nla_data(data[IFLA_RMNET_FLAGS]);
-		data_format = flags->flags & flags->mask;
+		data_format = rmnet_fixup_data_format(real_dev,
+						      flags->flags & flags->mask);
 		netdev_dbg(dev, "data format [0x%08X]\n", data_format);
 		port->data_format = data_format;
 	}
@@ -405,7 +425,8 @@ static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
 		struct ifla_rmnet_flags *flags;
 
 		flags = nla_data(data[IFLA_RMNET_FLAGS]);
-		port->data_format = flags->flags & flags->mask;
+		port->data_format = rmnet_fixup_data_format(real_dev,
+						flags->flags & flags->mask);
 	}
 
 	if (data[IFLA_RMNET_DFC_QOS]) {
