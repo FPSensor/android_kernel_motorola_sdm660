@@ -7,6 +7,7 @@
 #define pr_fmt(fmt) DRIVER_NAME ": %s: " fmt, __func__
 
 #include <linux/uio_driver.h>
+#include "sharedmem_qmi.h"
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/err.h>
@@ -203,6 +204,18 @@ static int msm_sharedmem_probe(struct platform_device *pdev)
 	}
 	dev_set_drvdata(&pdev->dev, info);
 
+	{
+		struct sharemem_qmi_entry qmi_entry = {
+			.client_name = clnt_res->name,
+			.client_id = client_id,
+			.address = shared_mem_pyhsical,
+			.size = shared_mem_size,
+			.is_addr_dynamic = is_addr_dynamic,
+		};
+
+		sharedmem_qmi_add_entry(&qmi_entry);
+	}
+
 	pr_info("Device created for client '%s'\n", clnt_res->name);
 out:
 	return ret;
@@ -242,11 +255,17 @@ static int __init msm_sharedmem_init(void)
 		pr_err("Platform driver registration failed\n");
 		return result;
 	}
+
+	/* The modem asks for the rmtfs buffer address over QMI (RFSA) */
+	result = sharedmem_qmi_init();
+	if (result)
+		pr_err("sharedmem_qmi_init failed: %d\n", result);
 	return 0;
 }
 
 static void __exit msm_sharedmem_exit(void)
 {
+	sharedmem_qmi_exit();
 	platform_driver_unregister(&msm_sharedmem_driver);
 }
 
