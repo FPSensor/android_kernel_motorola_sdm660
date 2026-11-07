@@ -381,9 +381,8 @@ static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
 	if (!dev)
 		return -ENODEV;
 
-	real_dev = __dev_get_by_index(dev_net(dev),
-				      nla_get_u32(tb[IFLA_LINK]));
-
+	/* IFLA_LINK is optional on a change request */
+	real_dev = priv->real_dev;
 	if (!real_dev || !rmnet_is_real_dev_registered(real_dev))
 		return -ENODEV;
 
