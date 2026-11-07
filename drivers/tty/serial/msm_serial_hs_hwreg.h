@@ -22,6 +22,14 @@
 #define MSM_DISABLE_UART_CLOCK TIOCPMPUT
 #define MSM_GET_UART_CLOCK_STATUS TIOCPMACT
 
+/*
+ * Bluetooth HALs built against 4.4 and older kernels vote for the UART
+ * clock with the values TIOCPM* had there.
+ */
+#define MSM_ENABLE_UART_CLOCK_LEGACY 0x5441
+#define MSM_DISABLE_UART_CLOCK_LEGACY 0x5442
+#define MSM_GET_UART_CLOCK_STATUS_LEGACY 0x5443
+
 enum msm_hsl_regs {
 	UARTDM_MR1,
 	UARTDM_MR2,
