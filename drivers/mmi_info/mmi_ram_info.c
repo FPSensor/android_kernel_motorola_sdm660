@@ -14,7 +14,6 @@
 
 #include <linux/module.h>
 #include <linux/version.h>
-#include <linux/mmi_annotate.h>
 #include "mmi_info.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0)

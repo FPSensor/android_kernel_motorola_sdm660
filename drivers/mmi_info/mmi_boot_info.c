@@ -30,7 +30,6 @@
 #include <linux/seq_file.h>
 #include <linux/version.h>
 #include <soc/qcom/mmi_boot_info.h>
-#include <linux/mmi_annotate.h>
 #include "mmi_info.h"
 
 /*

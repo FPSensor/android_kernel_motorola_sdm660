@@ -16,7 +16,6 @@
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/slab.h>
-#include <linux/mmi_annotate.h>
 #include "mmi_info.h"
 
 struct mmi_storage_info *info;

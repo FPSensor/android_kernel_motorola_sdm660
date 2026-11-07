@@ -75,6 +75,17 @@ struct mmi_chosen_info {
 
 extern struct mmi_chosen_info mmi_chosen_data;
 
+#if IS_ENABLED(CONFIG_MMI_ANNOTATE)
+#include <linux/mmi_annotate.h>
+#else
+/*
+ * No mmi_annotate (persistent panic annotations): drop the persistent
+ * ones (serial number, bootloader signatures) and log the rest.
+ */
+#define mmi_annotate_persist(fmt, ...) no_printk(fmt, ##__VA_ARGS__)
+#define mmi_annotate(fmt, ...) pr_info("mmi_info: " fmt, ##__VA_ARGS__)
+#endif
+
 #define SYSFS_ATTRIBUTE(_name, _mode) \
 static struct kobj_attribute _name##_attr = \
 	__ATTR(_name, _mode, _name##_show, NULL); \

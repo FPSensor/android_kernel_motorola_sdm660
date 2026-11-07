@@ -1,10 +1,10 @@
 config MMI_INFO
-        tristate "MMI INFO"
-        default n
-	depends on MMI_ANNOTATE
-        help
-         Say Y here if you have a mmi info compatible
-         device connected.
+	tristate "Motorola MMI info"
+	depends on QCOM_SMEM
+	help
+	  Exposes the Motorola boot, unit, RAM and storage information
+	  passed by the bootloader (/proc/bootinfo, /sys/ram, /sys/storage,
+	  ...) and provides the unit info the modem reads from SMEM.
 
-         This driver can also be built as a module.  If so, the module
-         will be called mmi_info.
+	  This driver can also be built as a module. If so, the module
+	  will be called mmi_info.
