@@ -2665,7 +2665,15 @@ long tty_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	case TIOCGPTPEER:
 		/* Special because the struct file is needed */
-		return ptm_open_peer(file, tty, (int)arg);
+		if (tty->driver->type == TTY_DRIVER_TYPE_PTY &&
+		    tty->driver->subtype == PTY_TYPE_MASTER)
+			return ptm_open_peer(file, tty, (int)arg);
+		/*
+		 * 0x5441 was TIOCPMGET before 4.13, and vendor userspace
+		 * still uses it to vote for the MSM HS UART clock. Pass it
+		 * on to the driver for anything that isn't a pty master.
+		 */
+		break;
 	default:
 		retval = tty_jobctrl_ioctl(tty, real_tty, file, cmd, arg);
 		if (retval != -ENOIOCTLCMD)
