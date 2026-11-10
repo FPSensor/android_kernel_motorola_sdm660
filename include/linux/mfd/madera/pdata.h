@@ -1,12 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Platform data for Cirrus Logic Madera codecs
  *
  * Copyright (C) 2015-2018 Cirrus Logic
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; version 2.
  */
 
 #ifndef MADERA_PDATA_H
@@ -16,6 +12,8 @@
 #include <linux/regulator/arizona-ldo1.h>
 #include <linux/regulator/arizona-micsupp.h>
 #include <linux/regulator/machine.h>
+#include <sound/madera-pdata.h>
+#include <linux/extcon/extcon-madera-pdata.h>
 
 #define MADERA_MAX_MICBIAS		4
 #define MADERA_MAX_CHILD_MICBIAS	4
@@ -24,8 +22,32 @@
 
 struct gpio_desc;
 struct pinctrl_map;
-struct madera_irqchip_pdata;
-struct madera_codec_pdata;
+struct regulator_init_data;
+
+/**
+ * struct madera_micbias_pin_pdata - MICBIAS pin configuration
+ *
+ * @init_data: initialization data for the regulator
+ */
+struct madera_micbias_pin_pdata {
+	struct regulator_init_data *init_data;
+	u32 active_discharge;
+};
+
+/**
+ * struct madera_micbias_pdata - Regulator configuration for an on-chip MICBIAS
+ *
+ * @init_data: initialization data for the regulator
+ * @ext_cap:   set to true if an external capacitor is fitted
+ * @pin:       Configuration for each output pin from this MICBIAS
+ */
+struct madera_micbias_pdata {
+	struct regulator_init_data *init_data;
+	u32 active_discharge;
+	bool ext_cap;
+
+	struct madera_micbias_pin_pdata pin[MADERA_MAX_CHILD_MICBIAS];
+};
 
 /**
  * struct madera_pdata - Configuration data for Madera devices
@@ -35,11 +57,14 @@ struct madera_codec_pdata;
  * @micvdd:	    Substruct of pdata for the MICVDD regulator
  * @irq_flags:	    Mode for primary IRQ (defaults to active low)
  * @gpio_base:	    Base GPIO number
- * @gpio_configs:   Array of GPIO configurations (See Documentation/pinctrl.txt)
+ * @gpio_configs:   Array of GPIO configurations (See
+ *		    Documentation/driver-api/pinctl.rst)
  * @n_gpio_configs: Number of entries in gpio_configs
+ * @micbias:	    Substruct of pdata for the MICBIAS regulators
  * @gpsw:	    General purpose switch mode setting. Depends on the external
  *		    hardware connected to the switch. (See the SW1_MODE field
  *		    in the datasheet for the available values for your codec)
+ * @codec:	    Substruct of pdata for the ASoC codec driver
  */
 struct madera_pdata {
 	struct gpio_desc *reset;
@@ -53,7 +78,15 @@ struct madera_pdata {
 	const struct pinctrl_map *gpio_configs;
 	int n_gpio_configs;
 
+	/** MICBIAS configurations */
+	struct madera_micbias_pdata micbias[MADERA_MAX_MICBIAS];
+
 	u32 gpsw[MADERA_MAX_GPSW];
+
+	struct madera_codec_pdata codec;
+
+	/** Accessory detection configurations */
+	struct madera_accdet_pdata accdet[MADERA_MAX_ACCESSORY];
 };
 
 #endif

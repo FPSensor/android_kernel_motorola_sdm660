@@ -415,4 +415,9 @@ config SIFIVE_PLIC
 
 	   If you don't know what to do here, say Y.
 
+config MADERA_IRQ
+	tristate
+	select REGMAP
+	select REGMAP_IRQ
+
 endmenu
