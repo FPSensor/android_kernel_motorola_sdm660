@@ -937,6 +937,24 @@ config MSM_BAM_DMUX
 	 provides a means to support more logical channels
 	 via muxing than BAM could without muxing.
 
+menuconfig MOTOROLA_DTB
+	bool "Motorola sdm630/sdm636/sdm660 devices"
+	help
+	  Say 'Y' here to only build the device trees of the Motorola devices
+	  selected below (see arch/arm64/boot/dts/vendor/qcom/motorola/) and
+	  append them to Image.gz-dtb, instead of the QTI reference boards.
+
+if MOTOROLA_DTB
+
+config MOTOROLA_PAYTON_DTB
+	bool "Motorola X4 (payton)"
+	select SND_SOC_CS47L35 if MFD_CS47L35
+	select SND_SOC_MADERA_SLIMBUS
+	help
+	  Say 'Y' here to build the Motorola X4 device trees.
+
+endif # MOTOROLA_DTB
+
 endmenu
 
 config QCOM_HYP_CORE_CTL

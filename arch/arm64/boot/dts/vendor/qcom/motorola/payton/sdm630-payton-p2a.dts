@@ -1,0 +1,32 @@
+/dts-v1/;
+
+// Moto X4 (payton) - P2A board revision
+#include "sdm630-payton.dtsi"
+
+/ {
+	qcom,board-id = <0x41 0x82A0>, <0x42 0x82A0>;
+};
+
+&i2c_2 { /* BLSP1 QUP2 */
+	tps61280@75 {
+		compatible = "ti,tps61280";
+		reg = <0x75>;
+		ti,config = <0x0D>;
+		ti,vout-floor = <0x0D>;
+		ti,vout-roof = <0x19>;
+		ti,ilim = <0x0F>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&tps61280_en_default>;
+	};
+};
+
+&spi_7 {
+	cs47l35: cs47l35@0 {
+		cirrus,accdet {
+			acc@1 {
+				/delete-property/ cirrus,jd-check-jd2;
+				cirrus,micd-clamp-mode = <0x4>;
+			};
+		};
+	};
+};
