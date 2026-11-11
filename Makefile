@@ -529,7 +529,13 @@ CLANG_TARGET_FLAGS_s390		:= s390x-linux-gnu
 CLANG_TARGET_FLAGS_x86		:= x86_64-linux-gnu
 CLANG_TARGET_FLAGS		:= $(CLANG_TARGET_FLAGS_$(SRCARCH))
 
-ifeq ($(CROSS_COMPILE),)
+ifneq ($(CLANG_TRIPLE),)
+# The Android platform build passes CROSS_COMPILE=aarch64-linux-android-
+# for its GCC prebuilts plus CLANG_TRIPLE=aarch64-linux-gnu-. Building the
+# kernel for the Android userspace triple yields an image that does not
+# boot on payton, so honour CLANG_TRIPLE when it is given.
+CLANG_FLAGS	+= --target=$(notdir $(CLANG_TRIPLE:%-=%))
+else ifeq ($(CROSS_COMPILE),)
 ifeq ($(CLANG_TARGET_FLAGS),)
 $(error Specify CROSS_COMPILE or add '--target=' option to Makefile)
 else
