@@ -961,6 +961,14 @@ config MOTOROLA_PAYTON_DTB
 	help
 	  Say 'Y' here to build the Motorola X4 device trees.
 
+config MOTOROLA_LAKE_DTB
+	bool "Motorola G7 Plus (lake)"
+	select SND_SOC_CS47L35 if MFD_CS47L35
+	select SND_SOC_MADERA_SLIMBUS
+	help
+	  Say 'Y' here to build the Motorola G7 Plus device tree and overlays.
+	  Work in progress: see motorola/lake/README.md.
+
 endif # MOTOROLA_DTB
 
 endmenu
