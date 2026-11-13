@@ -1,0 +1,419 @@
+/* Copyright (c) 2018, Motorola Mobility Inc. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#include "sdm636-moto-common.dtsi"
+#include "dsi-panel-mot-tianma-624-1080p-vid.dtsi"
+#include "dsi-panel-mot-tianma-nova-624-1080p-vid.dtsi"
+#include "dsi-panel-mot-boe-624-1080p-vid.dtsi"
+#include "dsi-panel-mot-dummy-qhd-video.dtsi"
+#include "sdm636-lake-pinctrl.dtsi"
+#include "sdm636-camera-sensor-mot-lake.dtsi"
+#include "sdm636-lake-audio.dtsi"
+#include "sdm636-egis-fps.dtsi"
+#include "dsi-panel-mot-tianma-h-624-1080p-vid.dtsi"
+#include "dsi-panel-mot-tianma-n-revvl-624-1080p-vid.dtsi"
+
+#define LAKE_RADIO_NA 1
+#define LAKE_RADIO_TMO 5
+
+/ {
+	model = "lake";
+	compatible = "qcom,sdm636-lake", "qcom,sdm636-moto", "qcom,sdm636";
+};
+
+&i2c_3 {
+	status = "okay";
+
+	novatech@62 {
+		compatible = "novatek,NVT-ts";
+		reg = <0x62>;
+		interrupt-parent = <&tlmm>;
+		novatek,irq-gpio = <&tlmm 67 0x2001>;
+		novatek,reset-gpio = <&tlmm 66 0x00>;
+		novatek,usb_charger;
+		pinctrl-names = "active";
+		pinctrl-0 = <&nova_tp_rst_default>;
+	};
+
+	himax-ts@48 {
+		compatible = "himax,hxcommon";
+		reg = <0x48>;
+		interrupt-parent = <&tlmm>;
+		himax,rst-gpio = <&tlmm 66 0x00>;
+		himax,irq-gpio = <&tlmm 67 0x00>;
+		himax,display-coords = <0 1080 0 2270>;
+		himax,panel-coords = <0 1080 0 2270>;
+		report_type = <1>;
+	};
+};
+
+&i2c_2 {
+	status = "okay";
+	sx933x@28 {
+		compatible = "Semtech,sx933x";
+		reg = <0x28>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <75 0>;
+		Semtech,nirq-gpio = <&tlmm 75 0x00>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&sx933x_irq_default>;
+		cap_vdd-supply = <&pm660l_l8>;
+		Semtech,reg-num = <30>;
+		Semtech,button-flag = <0x07>;
+		Semtech,reg-init = <0x8020 0x1F0000
+			0x8024 0x1000087E /*again 6.6pf*/
+			0x8028 0x24928000
+			0x802c 0x1000107E
+			0x8030 0x24960000
+			0x8034 0x1000107E
+			0x8038 0x24B20000
+			0x803c 0x1000087E
+			0x8040 0x25920000
+			0x8044 0x1000087E
+			0x8048 0x2C920000
+			0x8054 0x02103010 /*ph0*/
+			0x8058 0x20600C00
+			0x805c 0x0
+			0x8064 0x006E0000 /*5mm th*/
+			0x806C 0xB5009300
+			0x8070 0x00010000
+			0x8074 0x02103110 /*ph1*/
+			0x8084 0x006D0000 /*5mm th*/
+			0x808C 0x0021001D
+			0x8090 0x00020000
+			0x8094 0x02103810 /*ph2*/
+			0x80A4 0x003F0000 /*5mm th*/
+			0x80AC 0x0021001D
+			0x80B0 0x00020000
+			0x80B4 0x0010FF00
+			0x80D4 0x0010FF00
+			0x8124 0x0400000C
+			0x8128 0x0400000B
+			0x4004 0x77 >;
+	};
+
+	/* AWINIC AW869X Haptic */
+	aw869x_haptic@5B {
+		compatible = "awinic,aw869x_haptic";
+		reg = <0x5B>;
+		reset-gpio = <&pm660_gpios 11 0>;
+		irq-gpio = <&tlmm 70 0>;
+		haptic-context-gpio = <&tlmm 8 0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&haptic_irq_default>;
+		status = "okay";
+	};
+	/* AWINIC AW869X Haptic End */
+};
+
+&ets_fps {
+	/delete-property/ egistec,gpio_ldo1p8_en;
+	/delete-property/ egistec,gpio_ldo3p3_en;
+	pinctrl-0 = <&ets_rst_active &ets_int_active>;
+	pinctrl-1 = <&ets_rst_suspend &ets_int_suspend>;
+};
+
+&pm660_l13 {
+	regulator-always-on;
+	qcom,init-voltage = <1800000>;
+};
+
+&pm660l_l6 {
+	regulator-always-on;
+	qcom,init-voltage = <3300000>;
+};
+
+&pm660_gpios {
+	/* GPIO 11 for VIB_RST_N */
+	gpio@ca00 {
+		qcom,mode = <1>;				/* Output */
+		qcom,pull = <5>;				/* Pull up */
+		qcom,vin-sel = <0>; 			/* VIN1 GPIO_LV */
+		qcom,src-sel = <0>; 			/* GPIO */
+		qcom,invert = <0>;				/* Invert */
+		qcom,master-en = <1>;			/* Enable GPIO */
+		status = "okay";
+	};
+};
+
+&red_led {
+	linux,name = "charging";
+	qcom,duty-pcts = [ 00 0E 1C 2A 38 46 54 64 ];
+	qcom,start-idx = <0>;
+	qcom,pause-lo = <500>;
+	qcom,pause-hi = <500>;
+	qcom,ramp-step-ms = <50>;
+	qcom,lut-flags = <31>; /* loop, ramp up, reverse, pause hi, pause lo */
+	qcom,use-blink;
+	/delete-property/ linux,default-trigger;
+};
+
+/delete-node/ &green_led;
+/delete-node/ &blue_led;
+
+&soc{
+/delete-node/ qcom,qbt1000;
+/delete-node/ typec-temp-sensor;
+
+	thermal-zones {
+	    /delete-node/ pcm_therm;
+	};
+
+	qcom,tz_gpio {
+		compatible = "qcom,tz_gpio";
+		tlmm-tz = <0>,
+			<1>,
+			<2>,
+			<3>;
+	};
+
+	ssphy: ssphy@c010000 {
+		status = "disabled";
+	};
+
+	usb_nop_phy: usb_nop_phy {
+		compatible = "usb-nop-xceiv";
+	};
+
+	sys_temp_support {
+		compatible = "mmi,sys-temp";
+		mmi,temperature-names = "front_temp",
+					"back_temp";
+		status = "ok";
+	};
+
+	mmi_pl_chg_manager {
+		compatible = "mmi,pl-chg-manager";
+		mmi,pmic-curr-lp-lmt = <500000>;
+		mmi,batt-ovp-lmt = <4475000>;
+		mmi,pmic-step-volt = <4400000>;
+		mmi,pmic-step-curr = <2500000>;
+		mmi,flashc-volt-hysteresis = <500000>;
+		mmi,flashc-curr-hysteresis = <300000>;
+		mmi,flashc-volt-up-steps = <20000>;
+		mmi,flashc-curr-up-steps = <50000>;
+		mmi,flashc-volt-down-steps = <20000>;
+		mmi,flashc-curr-down-steps = <50000>;
+		mmi,flashc-min-vbat-start = <3600000>;
+		flashc-name = "bq2597x";
+		qcom,usbpd-phandle = <&pm660_pdphy>;
+		mmi,mmi-pl-temp-zones =
+					<0 4200 582 0 0 0 0>,
+					<10 4200 2000 4400 582 0 0>,
+					<15 4200 4000 4400 2000 0 0>,
+					<45 4250 5500 4360 4000 4410 2000>,
+					<60 4200 4000 0 0 0 0>;
+		mmi,mmi-thermal-zones =
+					<9000000 3000000>,
+					<9000000 2800000>,
+					<9000000 2600000>,
+					<9000000 2400000>,
+					<9000000 2200000>,
+					<9000000 2000000>,
+					<9000000 1800000>,
+					<9000000 1600000>,
+					<9000000 1400000>,
+					<9000000 1200000>;
+	};
+};
+
+&usb3 {
+	dwc3@a800000 {
+		usb-phy = <&qusb_phy0>, <&usb_nop_phy>;
+		maximum-speed = "high-speed";
+	};
+};
+
+&qusb_phy0 {
+	qcom,tune2-efuse-correction = <(-1)>;
+	qcom,tune2-efuse-correction-host = <(-1)>;
+	qcom,qusb-phy-init-seq = <0xc0 0x80
+				0xb1 0x84
+				0x83 0x88
+				0xc7 0x8c
+				0x30 0x08
+				0x79 0x0c
+				0x21 0x10
+				0x14 0x9c
+				0x9f 0x1c
+				0x00 0x18>;
+	qcom,tune-factory-override = <0xC783B1C0>;
+};
+
+&mdss_mdp {
+	qcom,mdss-pref-prim-intf = "dsi";
+};
+
+&mdss_dsi {
+	hw-config = "single_dsi";
+};
+
+&mdss_dsi0 {
+	qcom,dsi-pref-prim-pan = <&mot_tianma_n_624_1080p_vid_v0>;
+	pinctrl-names = "mdss_default", "mdss_sleep";
+	pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
+	pinctrl-1 = <&mdss_dsi_suspend &mdss_te_suspend>;
+	qcom,platform-reset-gpio = <&tlmm 53 0>;
+	qcom,platform-te-gpio = <&tlmm 59 0>;
+};
+
+&pm660l_wled {
+	qcom,led-strings-list = [00 01];
+	qcom,en-cabc;
+};
+
+&mdss_dp_ctrl{
+		status = "disabled";
+};
+
+&tlmm {
+	bq_int_default: bq_int_default {
+		mux {
+			pins = "gpio50";
+			function = "gpio";
+		};
+
+		config {
+			pins = "gpio50";
+			drive-strength = <2>;
+			input-enable;
+		};
+	};
+};
+
+&i2c_2 {
+	status = "okay";
+	bq25970@66 {
+		compatible = "ti,bq25970-charger";
+		reg = <0x65>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <50 0x1>;
+		vdd-i2c-supply = <&pm660_l13>;
+		pinctrl-names = "bq_int_default";
+		pinctrl-0 = <&bq_int_default>;
+		gpios = <&tlmm 50 0x1>; /* IRQ */
+		gpio-names = "bq2597x_irq";
+
+	/*ti,bq2597x,bat-ovp-disable;*/
+	/*ti,bq2597x,bat-ovp-alarm-disable;*/
+	/*ti,bq2597x,bat-ocp-disable;*/
+	/*ti,bq2597x,bat-ocp-alarm-disable;*/
+		ti,bq2597x,bat-ucp-disable;
+
+	/*ti,bq2597x,bus-ovp-alarm-disable;*/
+	/*ti,bq2597x,bus-ocp-disable;*/
+	/*ti,bq2597x,bus-ocp-alarm-disable;*/
+
+		ti,bq2597x,bat-therm-disable;
+		ti,bq2597x,bus-therm-disable;
+		ti,bq2597x,die-therm-disable;
+		ti,bq2597x,bat-ucp-alarm-disable;
+
+		ti,bq2597x,bat-ovp-threshold = <5050>;
+		ti,bq2597x,bat-ovp-alarm-threshold = <5000>;
+		ti,bq2597x,bat-ocp-threshold = <8100>;
+		ti,bq2597x,bat-ocp-alarm-threshold = <8000>;
+
+		ti,bq2597x,bus-ovp-threshold = <11500>;
+		ti,bq2597x,bus-ovp-alarm-threshold = <11000>;
+		ti,bq2597x,bus-ocp-threshold = <4250>;
+		ti,bq2597x,bus-ocp-alarm-threshold = <4000>;
+		ti,bq2597x,bat-ucp-alarm-threshold = <1000>;
+
+		ti,bq2597x,bat-therm-threshold = <0x15>;/*4.1%*/
+		ti,bq2597x,bus-therm-threshold = <0x15>;/*4.1%*/
+		ti,bq2597x,die-therm-threshold = <125>;
+
+		ti,bq2597x,ac-ovp-threshold = <11>;
+	};
+
+	/delete-node/ smb1351-charger@1d;
+};
+
+/{
+	mot_batterydata: qcom,battery-data {
+		qcom,batt-id-range-pct = <15>;
+		df-serialnum = "SB18C35581";
+
+		#include "fg-gen3-batterydata-jg40-3000mah.dtsi"
+		#include "fg-gen3-batterydata-jg40cos-3000mah.dtsi"
+		#include "fg-gen3-batterydata-jg40-2-3000mah.dtsi"
+	};
+};
+
+&pm660_haptics {
+	status = "disabled";
+};
+
+&pm660_fg {
+	qcom,battery-data = <&mot_batterydata>;
+	qcom,fg-force-load-profile = <1>;
+	qcom,fg-rsense-sel = <1>;
+	qcom,fg-cutoff-voltage = <3200>;
+	qcom,fg-empty-voltage = <3000>;
+	qcom,fg-chg-term-current = <50>;
+	qcom,fg-sys-term-current = <(-180)>;
+	qcom,fg-delta-soc-thr = <1>;
+	qcom,fg-auto-recharge-soc;
+	qcom,fg-recharge-soc-thr = <97>;
+	qcom,fg-jeita-thresholds = <(-20)>, <0>, <45>, <60>;
+	qcom,fg-esr-timer-asleep = <0 256>;
+};
+
+&pm660_charger {
+	qcom,dc-icl-ua = <1100000>;
+	qcom,fcc-max-ua = <5000000>;
+	qcom,iterm-ma = <200>;
+	qcom,vfloat-comp-uv = <10000>;
+
+	qcom,mmi-temp-zones = <0 4200 582 0>,
+				<10 4200 2000 582>,
+				<15 4360 4000 2000>,
+				<45 4360 4000 2000>,
+				<60 4200 4000  0>;
+	qcom,mmi-sink-caps = <9000 3000>; /* 9V @ 3A */
+	io-channels = <&pm660_rradc 8>,
+		      <&pm660_rradc 10>,
+		      <&pm660_rradc 3>,
+		      <&pm660_rradc 4>,
+		      <&pm660_rradc 5>,
+		      <&pm660_rradc 6>;
+	io-channel-names = "charger_temp",
+			   "charger_temp_max",
+			   "usbin_i",
+			   "usbin_v",
+			   "dcin_i",
+			   "dcin_v";
+};
+
+&pm660_pdphy {
+	qcom,source-current = <900>;
+	qcom,default-sink-caps = <5000 3000>, /* 5V @ 3A */
+				 <9000 3000>; /* 9V @ 3A */
+	qcom,vbus-off-delay = <220>; /* Wait 220ms for VSafe0V (0.8V) */
+	qcom,vbus-on-delay = <30>; /* Wait 30ms for Vsafe5Vmin (4.75v) */
+};
+
+&pm660_bcl {
+	qcom,bcl-charger-mitigate-enable;
+	qcom,ibat-monitor {
+		qcom,soc-low-threshold = <5>;
+	};
+};
+
+&spmi_bus {
+	qcom,pm660l@2 {
+		qcom,power-on@800 {
+			/delete-property/ qcom,shipmode;
+		};
+	};
+};
