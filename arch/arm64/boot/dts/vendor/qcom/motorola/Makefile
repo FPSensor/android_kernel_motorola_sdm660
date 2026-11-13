@@ -9,3 +9,10 @@ dtb-$(CONFIG_MOTOROLA_PAYTON_DTB) += \
 	motorola/payton/sdm630-payton.dtb \
 	motorola/payton/sdm630-payton-p1a.dtb \
 	motorola/payton/sdm630-payton-p2a.dtb
+
+dtb-$(CONFIG_MOTOROLA_EVERT_DTB) += \
+	motorola/evert/sdm630-evert-evt1.dtb \
+	motorola/evert/sdm630-evert-dvt1a.dtb \
+	motorola/evert/sdm630-evert-dvt1b.dtb \
+	motorola/evert/sdm630-evert-dvt2.dtb \
+	motorola/evert/sdm630-evert-pvt1.dtb

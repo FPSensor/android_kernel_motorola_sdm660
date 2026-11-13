@@ -961,6 +961,13 @@ config MOTOROLA_PAYTON_DTB
 	help
 	  Say 'Y' here to build the Motorola X4 device trees.
 
+config MOTOROLA_EVERT_DTB
+	bool "Motorola G6 Plus (evert)"
+	select SND_SOC_CS47L35 if MFD_CS47L35
+	select SND_SOC_MADERA_SLIMBUS
+	help
+	  Say 'Y' here to build the Motorola G6 Plus device trees.
+
 endif # MOTOROLA_DTB
 
 endmenu

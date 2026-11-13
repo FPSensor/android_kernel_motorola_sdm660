@@ -1,0 +1,8 @@
+/dts-v1/;
+
+// Moto G6 Plus (evert) - EVT1 board revision
+#include "sdm630-evert.dtsi"
+
+/ {
+	qcom,board-id = <0x45 0xA100>;
+};
