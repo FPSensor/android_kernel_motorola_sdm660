@@ -6256,6 +6256,22 @@ schedtune_cpu_margin_with(unsigned long util, int cpu, struct task_struct *p)
 	return 0;
 }
 
+#ifdef CONFIG_SCHED_WALT
+/*
+ * schedutil takes the WALT load from here. Without SchedTune, apply the
+ * uclamp constraints of the RUNNABLE tasks instead of a boost margin.
+ */
+unsigned long
+stune_util(int cpu, unsigned long other_util,
+	   struct sched_walt_cpu_load *walt_load)
+{
+	unsigned long util = min_t(unsigned long, SCHED_CAPACITY_SCALE,
+				   cpu_util_freq(cpu, walt_load) + other_util);
+
+	return uclamp_rq_util_with(cpu_rq(cpu), util, NULL);
+}
+#endif
+
 #endif /* CONFIG_SCHED_TUNE */
 
 static unsigned long cpu_util_without(int cpu, struct task_struct *p);

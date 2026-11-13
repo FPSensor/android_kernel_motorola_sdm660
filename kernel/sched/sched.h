@@ -2233,7 +2233,7 @@ static inline unsigned long cpu_util_cum(int cpu, int delta)
 	return (delta >= capacity) ? capacity : delta;
 }
 
-#ifdef CONFIG_SCHED_TUNE
+#if defined(CONFIG_SCHED_TUNE) || defined(CONFIG_SCHED_WALT)
 extern unsigned long stune_util(int cpu, unsigned long other_util,
 				struct sched_walt_cpu_load *walt_load);
 #endif
