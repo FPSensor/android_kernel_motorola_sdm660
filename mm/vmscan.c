@@ -3648,7 +3648,6 @@ static void walk_mm(struct lruvec *lruvec, struct mm_struct *mm, struct lru_gen_
 {
 	int err;
 	struct mem_cgroup *memcg = lruvec_memcg(lruvec);
-	struct pglist_data *pgdat = lruvec_pgdat(lruvec);
 	struct mm_walk args = {
 		.mm = mm,
 		.private = walk,
